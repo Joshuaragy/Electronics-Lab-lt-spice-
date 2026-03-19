@@ -1,0 +1,180 @@
+*//////////////////////////////////////////////////////////////////////
+* NMOS FET 2N7000
+*
+.SUBCKT 2N7000 3 4 5
+* Nodes        D G S
+M1 3 2 5 5 MOD1
+RG 4 2 343
+RL 3 5 6E6
+C1 2 5 23.5P
+C2 3 2 4.5P 
+D1 5 3 DIODE1
+*
+.MODEL MOD1 NMOS VTO=2.474 RS=1.68 RD=0.0 IS=1E-15 KP=0.296
++CBD=53.5P PB=1 LAMBDA=267E-6
+.MODEL DIODE1 D IS=1.254E-13 N=1.0207 RS=0.222
+.ENDS 2N7000
+*
+*//////////////////////////////////////////////////////////////////////
+* One element of DF02M Bridge rectifier
+*
+.SUBCKT DF02M-D 3 4
+* Nodes        A K
+D1 3 4 D_DF02M-D
+*
+*SRC=DF02M;DI_DF02M;Diodes;Si;  200V  1.00A  3.00us   Diodes Inc. Bridge -- for one element 
+.MODEL D_DF02M-D D  ( IS=4.42n RS=42.0m BV=200 IBV=10.0u + CJO=65.0p  M=0.333 N=1.70 TT=4.32u )
+.ENDS DF02M-D
+*
+*//////////////////////////////////////////////////////////////////////
+* Rectifier Diode 1N4001
+*
+.SUBCKT 1N4001 3 4
+* Nodes        A K
+D1 3 4 D_1N4001
+*
+*1N4001 MCE General Purpose Diode 8-16-95 - 50V  1 A  4us  Si Diode pkg:DO-41 1,2
+.MODEL D_1N4001 D(IS=2.55E-9 RS=0.042 N=1.75 TT=5.76E-6 CJO=1.85E-11 VJ=0.75 M=0.333 BV=50 IBV=1E-5 )
+.ENDS 1N4001
+*
+*//////////////////////////////////////////////////////////////////////
+* Rectifier Diode 1N4002
+*
+.SUBCKT 1N4002 3 4
+* Nodes        A K
+D1 3 4 D_1N4002
+*
+*1N4002 MCE General Purpose Diode 8-16-95 - 100V  1 A  4us  Si Diode pkg:DO-41 1,2
+.MODEL D_1N4002 D(IS=2.55E-9 RS=0.042 N=1.75 TT=5.76E-6 CJO=1.85E-11 VJ=0.75 M=0.333 BV=100 IBV=1E-5 )
+.ENDS 1N4002
+*
+*//////////////////////////////////////////////////////////////////////
+* Zener Diode 5V6
+*
+*Ref: Temic Semiconductor Short Form, 1996
+*5.6V 500mW Si Zener pkg:Diode0.4 1,2
+.SUBCKT BZX55C5V6 1 2
+*    TERMINALS:  A K
+D1 1 2  DF
+DZ 3 1  DR
+VZ 2 3  5.097
+.MODEL DF D (IS=2.51N RS=84M N=1.7 CJO=82.3P VJ=0.75 M=0.33 TT=50.1N)
+.MODEL DR D (IS=1.04E-31 RS=0.649 N=0.29)
+.ENDS BZX55C5V6
+*
+
+*//////////////////////////////////////////////////////////
+*LM741 OPERATIONAL AMPLIFIER MACRO-MODEL
+*
+* connections:      non-inverting input
+*                   |   inverting input
+*                   |   |   positive power supply
+*                   |   |   |   negative power supply
+*                   |   |   |   |   output
+*                   |   |   |   |   |
+*                   |   |   |   |   |
+.SUBCKT LM741/NS    1   2  99  50  28
+*
+*Features:
+*Improved performance over industry standards
+*Plug-in replacement for LM709,LM201,MC1439,748
+*Input and output overload protection
+*
+****************INPUT STAGE**************
+*
+IOS 2 1 20N
+*^Input offset current
+R1 1 3 250K
+R2 3 2 250K
+I1 4 50 100U
+R3 5 99 517
+R4 6 99 517
+Q1 5 2 4 QX
+Q2 6 7 4 QX
+*Fp2=2.55 MHz
+C4 5 6 60.3614P
+*
+***********COMMON MODE EFFECT***********
+*
+I2 99 50 1.6MA
+*^Quiescent supply current
+EOS 7 1 POLY(1) 16 49 1E-3 1
+*Input offset voltage.^
+R8 99 49 40K
+R9 49 50 40K
+*
+*********OUTPUT VOLTAGE LIMITING********
+V2 99 8 1.63
+D1 9 8 DX
+D2 10 9 DX
+V3 10 50 1.63
+*
+**************SECOND STAGE**************
+*
+EH 99 98 99 49 1
+G1 98 9 5 6 2.1E-3
+*Fp1=5 Hz
+R5 98 9 95.493MEG
+C3 98 9 333.33P
+*
+***************POLE STAGE***************
+*
+*Fp=30 MHz
+G3 98 15 9 49 1E-6
+R12 98 15 1MEG
+C5 98 15 5.3052E-15
+*
+*********COMMON-MODE ZERO STAGE*********
+*
+*Fpcm=300 Hz
+G4 98 16 3 49 3.1623E-8
+L2 98 17 530.5M
+R13 17 16 1K
+*
+**************OUTPUT STAGE**************
+*
+F6 50 99 POLY(1) V6 450U 1
+E1 99 23 99 15 1
+R16 24 23 25
+D5 26 24 DX
+V6 26 22 0.65V
+R17 23 25 25
+D6 25 27 DX
+V7 22 27 0.65V
+V5 22 21 0.18V
+D4 21 15 DX
+V4 20 22 0.18V
+D3 15 20 DX
+L3 22 28 100P
+RL3 22 28 100K
+*
+***************MODELS USED**************
+*
+.MODEL DX D(IS=1E-15)
+.MODEL QX NPN(BF=625)
+*
+.ENDS LM741/NS
+*$
+*//////////////////////////////////////////////////////////////////////
+* NMOS FET with bulk connection, used for modelling CD4007 IC
+*
+.SUBCKT MbreakN 3 4 5 6
+* Nodes        D G S B
+M1 3 4 5 6 MbreakN
+*
+.model MbreakN NMOS LAMBDA=0.02 TOX=1200n VTO=1.9V PHI=.6 RS=0 KP=111u RD=0
++ CBD=2.0p CBS=2.0p PB=.8 CGSO=0.1p CGDO=0.1p IS=16.64p N=1 W=5E-6 L =1E-6 
+.ENDS MbreakN
+*$
+
+*//////////////////////////////////////////////////////////////////////
+* PMOS FET with bulk connection, used for modelling CD4007 IC
+*
+.SUBCKT MbreakP 3 4 5 6
+* Nodes        D G S B
+M1 3 4 5 6 MbreakP
+*
+.model MbreakP PMOS LAMBDA=0.04 TOX=1200n VTO=-1.9V PHI=.6 RS=0 KP=55u RD=0
++ CBD=4.0p CBS=4.0p PB=.8 CGSO=0.2p CGDO=0.2p IS=16.64p N=1 W=60E-6 L =10E-6
+.ENDS MbreakP
+*$
